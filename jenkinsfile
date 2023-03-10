@@ -1,0 +1,31 @@
+pipeline {
+  agent any
+   tools {
+    maven 'Maven'
+  }
+  stages {
+    stage('git checkout ') {
+      steps {
+        git branch: 'main', credentialsId: 'github-user', url: 'https://github.com/Vicky26-code/java-kube.git'
+      }
+    }
+    stage('Maven Build') {
+      steps {
+        sh 'mvn clean install'
+      }  
+    }
+    stage('Docker build') {
+      steps {
+        sh 'docker build -t vvicky4934/fromjenkins:${BUILD_NUMBER} .'
+      }  
+    }
+    stage('Docker login') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'docker-hubb', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
+            sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
+            sh 'docker push vvicky4934/fromjenkins:${BUILD_NUMBER}'  
+        }
+      }
+    }  
+  }
+}  
